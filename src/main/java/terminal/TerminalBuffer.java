@@ -136,4 +136,83 @@ public class TerminalBuffer {
         }
     }
 
+    // Single cell access
+
+    public Cell getCellFromScreen(int col, int row) {
+        if (col < 0 || col >= width || row < 0 || row >= height) {
+            throw new IndexOutOfBoundsException(
+                    "Position (" + col + ", " + row + ") out of screen bounds"
+            );
+        }
+        return screen[row].getCell(col);
+    }
+
+    public Cell getCellFromScrollback(int col, int row) {
+        if (col < 0 || col >= width || row < 0 || row >= scrollback.size()) {
+            throw new IndexOutOfBoundsException(
+                    "Position (" + col + ", " + row + ") out of scrollback bounds"
+            );
+        }
+        Line[] lines = scrollback.toArray(new Line[0]);
+        return lines[row].getCell(col);
+    }
+
+
+    // Attribute access
+
+    public TextStyle getStyleFromScreen(int col, int row) {
+        return getCellFromScreen(col, row).getStyle();
+    }
+
+    public TextStyle getStyleFromScrollback(int col, int row) {
+        return getCellFromScrollback(col, row).getStyle();
+    }
+
+
+    // Line access
+
+    public String getScreenLine(int row) {
+        if (row < 0 || row >= height) {
+            throw new IndexOutOfBoundsException(
+                    "Row " + row + " out of screen bounds"
+            );
+        }
+        return screen[row].toDisplayString();
+    }
+
+    public String getScrollbackLine(int row) {
+        if (row < 0 || row >= scrollback.size()) {
+            throw new IndexOutOfBoundsException(
+                    "Row " + row + " out of scrollback bounds"
+            );
+        }
+        Line[] lines = scrollback.toArray(new Line[0]);
+        return lines[row].toDisplayString();
+    }
+
+
+    // Full content access
+
+    public String getScreenContent() {
+        StringBuilder sb = new StringBuilder();
+        for (int row = 0; row < height; row++) {
+            sb.append(screen[row].toDisplayString());
+            if (row < height - 1) sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+    public String getAllContent() {
+        StringBuilder sb = new StringBuilder();
+        Line[] scrollbackLines = scrollback.toArray(new Line[0]);
+
+        for (Line scrollbackLine : scrollbackLines) {
+            sb.append(scrollbackLine.toDisplayString());
+            sb.append("\n");
+        }
+
+        sb.append(getScreenContent());
+        return sb.toString();
+    }
+
 }
