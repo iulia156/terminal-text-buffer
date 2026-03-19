@@ -215,4 +215,8 @@ public class TerminalBuffer {
         return sb.toString();
     }
 
+    public int getScrollbackSize() {
+        return scrollback.size();
+    }
+
 }
