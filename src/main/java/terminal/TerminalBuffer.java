@@ -1,10 +1,11 @@
 package terminal;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 
 public class TerminalBuffer {
-    private final int width;
-    private final int height;
+    private int width;
+    private int height;
     private final int maxScrollback;
 
     private final Line[] screen;
@@ -230,6 +231,78 @@ public class TerminalBuffer {
 
     private boolean isWideChar(char c) {
         return Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS || Character.UnicodeBlock.of(c) == Character.UnicodeBlock.HIRAGANA || Character.UnicodeBlock.of(c) == Character.UnicodeBlock.KATAKANA;
+    }
+
+    public void resize(int newWidth, int newHeight) {
+        java.util.List<Line> allLines = new java.util.ArrayList<>(scrollback);
+        allLines.addAll(Arrays.asList(screen));
+
+        java.util.List<Line> rewrapped = new java.util.ArrayList<>();
+        for (Line oldLine : allLines) {
+            rewrapped.addAll(rewrapLine(oldLine, newWidth));
+        }
+
+        scrollback.clear();
+        Line[] newScreen = new Line[newHeight];
+
+        if (rewrapped.size() <= newHeight) {
+            int offset = newHeight - rewrapped.size();
+            for (int i = 0; i < newHeight; i++) {
+                if (i < offset) {
+                    newScreen[i] = new Line(newWidth);
+                } else {
+                    newScreen[i] = rewrapped.get(i - offset);
+                }
+            }
+        } else {
+            int scrollbackCount = rewrapped.size() - newHeight;
+            for (int i = 0; i < scrollbackCount; i++) {
+                if (scrollback.size() >= maxScrollback) break;
+                scrollback.addLast(rewrapped.get(i));
+            }
+            for (int i = 0; i < newHeight; i++) {
+                newScreen[i] = rewrapped.get(scrollbackCount + i);
+            }
+        }
+
+        this.width = newWidth;
+        this.height = newHeight;
+        System.arraycopy(newScreen, 0, screen, 0, newHeight);
+        setCursor(cursorCol, cursorRow);
+    }
+
+    private java.util.List<Line> rewrapLine(Line oldLine, int newWidth) {
+        java.util.List<Line> result = new java.util.ArrayList<>();
+        Line current = new Line(newWidth);
+        int col = 0;
+
+        for (int i = 0; i < oldLine.getWidth(); i++) {
+            Cell cell = oldLine.getCell(i);
+            if (cell.isContinuation()) continue;
+
+            if (col >= newWidth) {
+                result.add(current);
+                current = new Line(newWidth);
+                col = 0;
+            }
+
+            if (cell.isWide() && col + 1 >= newWidth) {
+                current.setCell(col, Cell.EMPTY);
+                result.add(current);
+                current = new Line(newWidth);
+                col = 0;
+            }
+
+            current.setCell(col, cell);
+            if (cell.isWide()) {
+                current.setCell(col + 1, new Cell(null, cell.getStyle(), false, true));
+                col += 2;
+            } else {
+                col++;
+            }
+        }
+        result.add(current);
+        return result;
     }
 
 }

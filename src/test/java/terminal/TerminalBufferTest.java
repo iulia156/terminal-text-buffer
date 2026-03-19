@@ -309,4 +309,51 @@ public class TerminalBufferTest {
         assertThrows(IndexOutOfBoundsException.class, () -> buffer.getCellFromScreen(-1, 0));
     }
 
+    // Wide characters
+
+    @Test
+    void wideCharOccupiesTwoCells() {
+        TerminalBuffer buffer = new TerminalBuffer(80, 24);
+        buffer.writeText("中");
+        assertTrue(buffer.getCellFromScreen(0, 0).isWide());
+        assertTrue(buffer.getCellFromScreen(1, 0).isContinuation());
+        assertEquals(2, buffer.getCursorCol());
+    }
+
+    @Test
+    void wideCharAtEdgeOfLineIsHandled() {
+        TerminalBuffer buffer = new TerminalBuffer(5, 24);
+        buffer.setCursor(4, 0); // only 1 cell left
+        buffer.writeText("中");  // needs 2, shouldn't crash
+        assertEquals(4, buffer.getCursorCol()); // cursor didn't move
+    }
+
+    // Resize
+
+    @Test
+    void resizeUpdatesWidthAndHeight() {
+        TerminalBuffer buffer = new TerminalBuffer(80, 24);
+        buffer.resize(40, 12);
+        assertEquals(40, buffer.getWidth());
+        assertEquals(12, buffer.getHeight());
+    }
+
+    @Test
+    void resizePreservesContent() {
+        TerminalBuffer buffer = new TerminalBuffer(80, 24);
+        buffer.setCursor(0, 0);
+        buffer.writeText("Hello");
+        buffer.resize(40, 12);
+        assertTrue(buffer.getAllContent().contains("Hello"));
+    }
+
+    @Test
+    void resizeClampsCursorToBounds() {
+        TerminalBuffer buffer = new TerminalBuffer(80, 24);
+        buffer.setCursor(79, 23);
+        buffer.resize(40, 12);
+        assertTrue(buffer.getCursorCol() < 40);
+        assertTrue(buffer.getCursorRow() < 12);
+    }
+
 }
