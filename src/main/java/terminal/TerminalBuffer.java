@@ -1,0 +1,70 @@
+package terminal;
+
+import java.util.ArrayDeque;
+
+public class TerminalBuffer {
+    private final int width;
+    private final int height;
+    private final int maxScrollback;
+
+    private final Line[] screen;
+    private final ArrayDeque<Line> scrollback;
+
+    private int cursorCol;
+    private int cursorRow;
+
+    private TextStyle currentStyle;
+
+    public TerminalBuffer(int width, int height, int maxScrollback) {
+        this.width = width;
+        this.height = height;
+        this.maxScrollback = maxScrollback;
+        this.screen = new Line[height];
+        for (int i = 0; i < height; i++) {
+            screen[i] = new Line(width);
+        }
+        this.scrollback = new ArrayDeque<>();
+        this.cursorCol = 0;
+        this.cursorRow = 0;
+        this.currentStyle = TextStyle.DEFAULT;
+    }
+
+    public TerminalBuffer(int width, int height) {
+        this(width, height, 1000);
+    }
+
+    public int getWidth()     { return width; }
+    public int getHeight()    { return height; }
+    public int getCursorCol() { return cursorCol; }
+    public int getCursorRow() { return cursorRow; }
+    public TextStyle getCurrentStyle() { return currentStyle; }
+
+    public void setCursor(int col, int row) {
+        this.cursorCol = clamp(col, 0, width - 1);
+        this.cursorRow = clamp(row, 0, height - 1);
+    }
+
+    public void moveCursorUp(int n) {
+        setCursor(cursorCol, cursorRow - n);
+    }
+
+    public void moveCursorDown(int n) {
+        setCursor(cursorCol, cursorRow + n);
+    }
+
+    public void moveCursorLeft(int n) {
+        setCursor(cursorCol - n, cursorRow);
+    }
+
+    public void moveCursorRight(int n) {
+        setCursor(cursorCol + n, cursorRow);
+    }
+
+    public void setStyle(TextStyle style) {
+        this.currentStyle = style;
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+}
