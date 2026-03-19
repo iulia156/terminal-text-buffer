@@ -67,4 +67,19 @@ public class TerminalBuffer {
     private int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
+
+    public void insertEmptyLine() {
+        Line topLine = screen[0];
+        scrollback.addLast(topLine.copy());
+
+        if (scrollback.size() > maxScrollback) {
+            scrollback.removeFirst();
+        }
+
+        for (int i = 0; i < height-1; i++) {
+            screen[i] = screen[i + 1];
+        }
+
+        screen[height-1] = new Line(width);
+    }
 }
