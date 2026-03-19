@@ -82,4 +82,17 @@ public class TerminalBuffer {
 
         screen[height-1] = new Line(width);
     }
+
+    public void clearScreen() {
+        for (int i = 0; i < height; i++) {
+            screen[i] = new Line(width);
+        }
+        setCursor(0, 0);
+    }
+
+    public void clearAll() {
+        clearScreen();
+        scrollback.clear();
+    }
+
 }
