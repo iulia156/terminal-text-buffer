@@ -39,6 +39,7 @@ public class Line {
     public String toDisplayString() {
         StringBuilder sb = new StringBuilder(width);
         for (Cell cell : cells) {
+            if (cell.isContinuation()) continue;
             sb.append(cell.isEmpty() ? ' ' : cell.getCharacter());
         }
         return sb.toString();

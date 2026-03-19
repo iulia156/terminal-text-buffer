@@ -102,13 +102,22 @@ public class TerminalBuffer {
 
     public void writeText(String text) {
         Line line = screen[cursorRow];
+
         for (int i = 0; i < text.length(); i++) {
-            if (cursorCol >= width) {
-                break;
-            }
+            if (cursorCol >= width) break;
             char c = text.charAt(i);
-            line.setCell(cursorCol, new Cell(c, currentStyle));
-            cursorCol++;
+            if (isWideChar(c)) {
+                if (cursorCol + 1 >= width) {
+                    line.setCell(cursorCol, Cell.EMPTY);
+                    break;
+                }
+                line.setCell(cursorCol, new Cell(c, currentStyle, true, false));
+                line.setCell(cursorCol + 1, new Cell(null, currentStyle, false, true));
+                cursorCol += 2;
+            } else {
+                line.setCell(cursorCol, new Cell(c, currentStyle));
+                cursorCol++;
+            }
         }
     }
 
@@ -217,6 +226,10 @@ public class TerminalBuffer {
 
     public int getScrollbackSize() {
         return scrollback.size();
+    }
+
+    private boolean isWideChar(char c) {
+        return Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS || Character.UnicodeBlock.of(c) == Character.UnicodeBlock.HIRAGANA || Character.UnicodeBlock.of(c) == Character.UnicodeBlock.KATAKANA;
     }
 
 }
