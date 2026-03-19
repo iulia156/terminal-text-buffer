@@ -95,4 +95,45 @@ public class TerminalBuffer {
         scrollback.clear();
     }
 
+    public void fillLine(Character character) {
+        Line line = screen[cursorRow];
+        line.fill(character, currentStyle);
+    }
+
+    public void writeText(String text) {
+        Line line = screen[cursorRow];
+        for (int i = 0; i < text.length(); i++) {
+            if (cursorCol >= width) {
+                break;
+            }
+            char c = text.charAt(i);
+            line.setCell(cursorCol, new Cell(c, currentStyle));
+            cursorCol++;
+        }
+    }
+
+    public void insertText(String text) {
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            if (cursorCol >= width) {
+                if (cursorRow == height - 1) {
+                    insertEmptyLine();
+                    cursorRow = height - 1;
+                } else {
+                    cursorRow++;
+                }
+                cursorCol = 0;
+            }
+
+            Line line = screen[cursorRow];
+
+            for (int col = width - 1; col > cursorCol; col--) {
+                line.setCell(col, line.getCell(col - 1));
+            }
+            line.setCell(cursorCol, new Cell(c, currentStyle));
+            cursorCol++;
+        }
+    }
+
 }
